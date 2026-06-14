@@ -1,0 +1,2 @@
+# api_test_project
+本项目用于展示API自动化测试的基础能力。使用公开的测试API（JSONPlaceholder）作为被测对象，覆盖长剑的1HTTP方法，并集成了Allure测试报告
