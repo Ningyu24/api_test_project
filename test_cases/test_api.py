@@ -1,12 +1,10 @@
 import pytest
 import requests
-@pytest.fixture
-def base_url():
-    url = "https://jsonplaceholder.typicode.com/posts"
-    return url
+from config import base_url,post_test_data
 
 class TestGetPosts:
-    def test_get_posts(self,base_url):
+    #获取所有帖子
+    def test_get_posts(self):
         response=requests.get(base_url)
         assert response.status_code==200
         #断言返回数据是列表且至少有一条
@@ -15,18 +13,24 @@ class TestGetPosts:
         assert len(data)>0
         #打印前两条记录
         print("前两条帖子",data[:2])
-    def test_get_single_posts(self,base_url):
-        response=requests.get(f"{base_url}/1")
-        assert response.status_code==200
+
+    @pytest.mark.parametrize("post_id,expected_status",post_test_data)
+    #获取单个帖子
+    def test_get_single_posts(self,post_id,expected_status):
+        response=requests.get(f"{base_url}/{post_id}")
+        assert response.status_code==expected_status
         data=response.json()
-        assert data["id"]==1
-        assert "title" in data
-    def test_get_nonexist_posts(self,base_url):
+        if response.status_code==200:
+            assert data["id"]==post_id
+            assert "title" in data
+    #获取不存在的帖子
+    def test_get_nonexist_posts(self):
         response=requests.get(f"{base_url}/999")
         assert response.status_code==404
 
 class TestCreatePosts:
-    def test_create_posts(self,base_url):
+    #创建帖子（完整数据）
+    def test_create_posts(self):
         json_data={
             "userID":11,
             "title":"A wonderful day",
@@ -46,7 +50,8 @@ class TestCreatePosts:
         get_response=requests.get(f"{base_url}/{new_id}")
         #因为jsonplaceholder不会真正保留数据，所以预期返回404
         assert get_response.status_code==404
-    def test_create_post_missing_fields(self,base_url):
+    #创建帖子（缺少字段）
+    def test_create_post_missing_fields(self):
         incomplete_data={
             "title":"Only title"
         }
@@ -54,7 +59,8 @@ class TestCreatePosts:
         #jsonplaceholder对缺失字段会返回201，因为它不校验，但真实的API会返回404
         assert response.status_code==201
         assert response.json()["title"]=="Only title"
-    def test_create_post_empty_body(self,base_url):
+    #创建帖子（空数据）
+    def test_create_post_empty_body(self):
         response=requests.post(base_url,json={})
         #jsonplaceholder对缺失字段会返回201，因为它不校验，但真实的API会返回404
         assert response.status_code==201
